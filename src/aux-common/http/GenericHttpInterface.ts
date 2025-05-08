@@ -86,6 +86,24 @@ export interface GenericHttpResponse {
     body?: string | null | AsyncIterable<string>;
 }
 
+/**
+ * Defines an interface for a generic HTTP response indicating an error.
+ */
+export interface GenericHttpResponseError {
+    /**
+     * The status code of the error response.
+     */
+    success: false;
+    /**
+     * The status code (programmatic error code) of the error.
+     */
+    errorCode: string;
+    /**
+     * A human-readable message describing the error.
+     */
+    errorMessage: string;
+}
+
 export interface GenericHttpHeaders {
     [key: string]: string;
 }

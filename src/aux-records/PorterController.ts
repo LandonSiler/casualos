@@ -15,16 +15,25 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import childProcess from 'child_process';
 
-const commitHash = childProcess
-    .execSync('git rev-parse HEAD')
-    .toString()
-    .trim();
-const latestTag = childProcess
-    .execSync('git describe --abbrev=0 --tags')
-    .toString()
-    .trim();
+export class PorterController {
+    private static instance: PorterController;
 
-export const GIT_TAG = latestTag;
-export const GIT_HASH = commitHash;
+    private constructor() {}
+
+    public static getInstance(): PorterController {
+        if (!PorterController.instance) {
+            PorterController.instance = new PorterController();
+        }
+        return PorterController.instance;
+    }
+
+    public async getPorterData(): Promise<any> {
+        // Simulate fetching data from a database or an API
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve({ message: 'Porter data fetched successfully!' });
+            }, 1000);
+        });
+    }
+}

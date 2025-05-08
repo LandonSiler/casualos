@@ -18,6 +18,7 @@
 import type {
     GenericHttpRequest,
     GenericHttpResponse,
+    GenericHttpResponseError,
 } from '../http/GenericHttpInterface';
 import z, { input } from 'zod';
 import type { KnownErrorCodes } from './ErrorCodes';
@@ -63,10 +64,8 @@ export interface ProcedureOutputSuccess {
     success: true;
 }
 
-export interface ProcedureOutputError {
-    success: false;
+export interface ProcedureOutputError extends GenericHttpResponseError {
     errorCode: KnownErrorCodes;
-    errorMessage: string;
     reason?: DenialReason;
 }
 
@@ -102,6 +101,15 @@ export interface Procedure<TInput, TOutput extends ProcedureOutput, TQuery> {
         context: RPCContext,
         query?: TQuery
     ) => Promise<TOutput>;
+
+    /**
+     * The state of the dependencies for the procedure.
+     * * If the dependencies are null/undefined, then the procedure is not ready to be called.
+     */
+    dependencies?: {
+        ok: boolean;
+        firstError: ProcedureOutputError | null;
+    };
 
     /**
      * The function that can map the output of the handler to an HTTP response.
@@ -202,6 +210,13 @@ export type ProcedureActions<T extends Procedures> = {
 
 export interface ProcedureBuilder {
     /**
+     * Configures the dependencies that this procedure requires.
+     * @param dependencies The dependencies that this procedure requires.
+     */
+    requires(
+        dependencies: Array<{ ref: unknown; err: ProcedureOutputError }>
+    ): this;
+    /**
      * Configures the origins that are allowed for the route.
      * @param allowedOrigins The origins that are allowed.
      */
@@ -273,9 +288,26 @@ class ProcBuilder
     private _schema: z.ZodType<any, z.ZodTypeDef, any>;
     private _querySchema: z.ZodType<any, z.ZodTypeDef, any>;
     private _http: Procedure<any, any, any>['http'];
+    private _dependencyState: {
+        ok: boolean;
+        firstError: ProcedureOutputError | null;
+    } = { ok: true, firstError: null };
 
     origins(allowedOrigins: Set<string> | true | 'account' | 'api'): this {
         this._allowedOrigins = allowedOrigins;
+        return this;
+    }
+
+    requires(
+        dependencies: Array<{ ref: unknown; err: ProcedureOutputError }>
+    ): this {
+        for (let dep of dependencies) {
+            if ((dep.ref ?? undefined) === undefined) {
+                this._dependencyState.ok = false;
+                this._dependencyState.firstError = dep.err;
+                break;
+            }
+        }
         return this;
     }
 
@@ -318,6 +350,7 @@ class ProcBuilder
         ) => Promise<Partial<GenericHttpResponse>>
     ): Procedure<any, TOutput, any> {
         return {
+            dependencies: this._dependencyState,
             schema: this._schema,
             querySchema: this._querySchema,
             handler: handler,

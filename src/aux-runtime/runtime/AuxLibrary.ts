@@ -348,6 +348,7 @@ import {
     listNotificationSubscriptions as calcListNotificationSubscriptions,
     listUserNotificationSubscriptions as calcListUserNotificationSubscriptions,
     aiOpenAICreateRealtimeSession,
+    callPorter as calcCallPorter,
 } from './RecordsEvents';
 import {
     sortBy,
@@ -3412,6 +3413,10 @@ export function createDefaultLibrary(context: AuxGlobalContext) {
 
             portal: {
                 registerPrefix,
+            },
+
+            porter: {
+                callPorter,
             },
 
             server: {
@@ -9988,6 +9993,14 @@ export function createDefaultLibrary(context: AuxGlobalContext) {
             options ?? {},
             task.taskId
         );
+        const final = addAsyncResultAction(task, event);
+        (final as any)[ORIGINAL_OBJECT] = event;
+        return final;
+    }
+
+    function callPorter(options?: RecordActionOptions) {
+        const task = context.createTask();
+        const event = calcCallPorter(options ?? {}, task.taskId);
         const final = addAsyncResultAction(task, event);
         (final as any)[ORIGINAL_OBJECT] = event;
         return final;

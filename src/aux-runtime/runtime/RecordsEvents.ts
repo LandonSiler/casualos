@@ -71,7 +71,8 @@ export type RecordsAsyncActions =
     | SetRoomTrackOptionsAction
     | GetRoomRemoteOptionsAction
     | RecordsCallProcedureAction
-    | SubscribeToNotificationAction;
+    | SubscribeToNotificationAction
+    | PorterAction;
 
 /**
  * An event that is used to chat with an AI.
@@ -599,6 +600,10 @@ export interface SubscribeToNotificationAction extends RecordsAction {
      * The address of the notification.
      */
     address: string;
+}
+
+export interface PorterAction extends RecordsAction {
+    type: 'porter_action';
 }
 
 // /**
@@ -2212,6 +2217,19 @@ export function listUserNotificationSubscriptions(
             listUserNotificationSubscriptions: {
                 input: {},
             },
+        },
+        options,
+        taskId
+    );
+}
+
+export function callPorter(
+    options: RecordActionOptions,
+    taskId?: number | string
+): RecordsCallProcedureAction {
+    return recordsCallProcedure(
+        {
+            callPorter: { input: null },
         },
         options,
         taskId

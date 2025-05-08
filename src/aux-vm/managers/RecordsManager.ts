@@ -228,6 +228,7 @@ export class RecordsManager {
         'listNotificationSubscriptions',
         'listUserNotificationSubscriptions',
         'createOpenAIRealtimeSession',
+        'callPorter',
     ]);
 
     /**

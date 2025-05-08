@@ -144,6 +144,7 @@ import {
     PUSH_NOTIFICATION_PAYLOAD,
     PUSH_SUBSCRIPTION_SCHEMA,
 } from './notifications';
+import type { PorterController } from './PorterController';
 
 declare const GIT_TAG: string;
 declare const GIT_HASH: string;
@@ -216,6 +217,12 @@ export const MODERATION_NOT_SUPPORTED_RESULT = {
     success: false as const,
     errorCode: 'not_supported' as const,
     errorMessage: 'Moderation features are not supported by this server.',
+};
+
+export const PORTER_NOT_SUPPORTED_RESULT = {
+    success: false as const,
+    errorCode: 'not_supported' as const,
+    errorMessage: 'Porter features are not supported by this server.',
 };
 
 /**
@@ -364,6 +371,12 @@ export interface RecordsServerOptions {
     loomController?: LoomController | null;
 
     /**
+     * The controller that should be used for handling porter requests.
+     * If null, then porter is not supported.
+     */
+    porterController?: PorterController | null;
+
+    /**
      * The controller that should be used for handling webhooks.
      * If null, then webhooks are not supported.
      */
@@ -398,6 +411,7 @@ export class RecordsServer {
     private _websocketController: WebsocketController | null;
     private _moderationController: ModerationController | null;
     private _loomController: LoomController | null;
+    private _porterController: PorterController | null;
     private _webhooksController: WebhookRecordsController | null;
     private _notificationsController: NotificationRecordsController | null;
 
@@ -465,6 +479,7 @@ export class RecordsServer {
         aiController,
         moderationController,
         loomController,
+        porterController,
         webhooksController,
         notificationsController,
     }: RecordsServerOptions) {
@@ -486,6 +501,7 @@ export class RecordsServer {
         this._websocketController = websocketController;
         this._moderationController = moderationController;
         this._loomController = loomController;
+        this._porterController = porterController;
         this._webhooksController = webhooksController;
         this._notificationsController = notificationsController;
         this._tracer = trace.getTracer(
@@ -3757,6 +3773,20 @@ export class RecordsServer {
                     }
                 ),
 
+            callPorter: procedure()
+                .requires([
+                    {
+                        ref: this._porterController,
+                        err: PORTER_NOT_SUPPORTED_RESULT,
+                    },
+                ])
+                .origins('api')
+                .http('POST', '/api/v2/porter/action')
+                .inputs(z.object({}))
+                .handler(() => {
+                    return this._porterController.getPorterData();
+                }),
+
             listInsts: procedure()
                 .origins('api')
                 .http('GET', '/api/v2/records/insts/list')
@@ -3990,6 +4020,10 @@ export class RecordsServer {
                         errorCode: 'not_found',
                         errorMessage: `Unable to find procedure: ${procedure}`,
                     } as const);
+                }
+
+                if ('dependencies' in proc && proc.dependencies.ok === false) {
+                    return returnResult(proc.dependencies.firstError);
                 }
 
                 const span = trace.getActiveSpan();
