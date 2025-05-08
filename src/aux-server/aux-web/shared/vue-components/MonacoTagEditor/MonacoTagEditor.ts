@@ -311,13 +311,31 @@ export default class MonacoTagEditor extends Vue {
             },
         });
         this._sub.add(toSubscription(disposable));
-
         this._updateModel();
     }
 
     onEditorMounted(editor: monaco.editor.IStandaloneCodeEditor) {
         const sim = this._getSimulation(this.simId);
         this._sub.add(watchEditor(sim, editor));
+        //TODO: Make this use enable as a validation to subscribe to
+        sim.symLinkManager.fileChange$.subscribe((event) => {
+            if (event.host === 'external' && event.type === 'update') {
+                const [id, tag] = event.uri.split('_');
+                if (
+                    id === this.bot.id &&
+                    tag.substring(0, tag.indexOf('.')) === this.tag
+                ) {
+                    if (this._model.getValue() !== event.data) {
+                        if (this.editor.hasTextFocus()) {
+                            // TODO: Refactor and fix when a better piping system has time to be developed
+                            return;
+                        } else {
+                            this._model.setValue(event.data);
+                        }
+                    }
+                }
+            }
+        });
     }
 
     onModelChanged(event: monaco.editor.IModelChangedEvent) {
@@ -345,6 +363,15 @@ export default class MonacoTagEditor extends Vue {
     editorBlured() {
         setActiveModel(null);
         this.$emit('onFocused', false);
+    }
+
+    enableTagSync() {
+        const sim = this._getSimulation(this.simId);
+        sim.symLinkManager.userTriggeredInit();
+    }
+
+    get isCurrentTagSynced() {
+        return true;
     }
 
     makeNormalTag() {
@@ -423,6 +450,17 @@ export default class MonacoTagEditor extends Vue {
 
         const calculatedTagValue = calculateBotValue(null, bot, tag);
         const rawTagValue = getTagValueForSpace(bot, tag, space);
+
+        if (sim.symLinkManager.enabled) {
+            //TODO: Add tag specific tracking rather than just all tags
+            sim.symLinkManager.onFileChange({
+                type: 'update',
+                uri: `${bot.id}/${tag}.tsx`,
+                data: isScript(rawTagValue)
+                    ? rawTagValue.substring(1)
+                    : rawTagValue,
+            });
+        }
 
         this.hasError =
             (isScript(rawTagValue) || isFormula(rawTagValue)) &&

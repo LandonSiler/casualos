@@ -75,6 +75,7 @@ import { LivekitManager } from './LivekitManager';
 import { SocketManager as WebSocketManager } from '@casual-simulation/websocket';
 import { ApiGatewayWebsocketConnectionClient } from '@casual-simulation/aux-websocket-aws';
 import { WebsocketConnectionClient } from '@casual-simulation/aux-websocket';
+import SymLinkManager, { FileHandleSymLinkProvider } from './SymLinkManager';
 
 /**
  * Defines a class that interfaces with the AppManager and SocketManager
@@ -91,6 +92,7 @@ export class BotManager extends BaseSimulation implements BrowserSimulation {
     private _livekitManager: LivekitManager;
     private _config: AuxConfig['config'];
     private _origin: SimulationOrigin;
+    private _symLinkManager: SymLinkManager;
 
     /**
      * Gets the bots panel manager.
@@ -133,6 +135,10 @@ export class BotManager extends BaseSimulation implements BrowserSimulation {
 
     get livekit() {
         return this._livekitManager;
+    }
+
+    get symLinkManager() {
+        return this._symLinkManager;
     }
 
     get consoleMessages() {
@@ -406,10 +412,16 @@ export class BotManager extends BaseSimulation implements BrowserSimulation {
             }
         );
         this._livekitManager = new LivekitManager(this._helper);
+        this._symLinkManager = new SymLinkManager({
+            botWatcher: this._watcher,
+            botHelper: this._helper,
+            symLinkProvider: new FileHandleSymLinkProvider(),
+        });
 
         this._subscriptions.push(this._portals);
         this._subscriptions.push(this._botPanel);
         this._subscriptions.push(this._idePortal);
+        this._subscriptions.push(this._symLinkManager);
         this._subscriptions.push(
             this._vm.localEvents
                 .pipe(

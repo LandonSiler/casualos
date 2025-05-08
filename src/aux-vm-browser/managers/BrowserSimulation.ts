@@ -27,6 +27,7 @@ import type { Observable } from 'rxjs';
 import type { IdePortalManager } from './IdePortalManager';
 import type { AuthHelper } from './AuthHelper';
 import type { LivekitManager } from './LivekitManager';
+import type SymLinkManager from './SymLinkManager';
 
 /**
  * Defines an interface for objects that represent bot simulations.
@@ -66,6 +67,11 @@ export interface BrowserSimulation extends RemoteSimulation {
      * Gets the Livekit manager.
      */
     livekit: LivekitManager;
+
+    /**
+     * Gets the symbolic link manager.
+     */
+    symLinkManager: SymLinkManager;
 
     /**
      * Edits the given bot and tag as if the user edited it manually.

@@ -72,7 +72,9 @@ import type {
     RecordsEndpointInfo,
     SimulationOrigin,
 } from '@casual-simulation/aux-vm/managers';
-
+import SymLinkManager, {
+    FileHandleSymLinkProvider,
+} from '@casual-simulation/aux-vm-browser/managers/SymLinkManager';
 /**
  * Defines a class that interfaces with the AppManager and SocketManager
  * to reactively edit bots.
@@ -89,6 +91,7 @@ export class PlaywrightSimulation
     private _authHelper: AuthHelper;
     private _recordsManager: RecordsManager;
     private _livekitManager: LivekitManager;
+    private _symLinkManager: SymLinkManager;
     private _config: AuxConfig['config'];
     private _origin: SimulationOrigin;
 
@@ -133,6 +136,10 @@ export class PlaywrightSimulation
 
     get livekit() {
         return this._livekitManager;
+    }
+
+    get symLinkManager() {
+        return this._symLinkManager;
     }
 
     get consoleMessages() {
@@ -283,7 +290,12 @@ export class PlaywrightSimulation
                 )
         );
         this._livekitManager = new LivekitManager(this._helper);
-
+        this._symLinkManager = new SymLinkManager({
+            symLinkProvider: new FileHandleSymLinkProvider(),
+            botWatcher: this._watcher,
+            botHelper: this._helper,
+        });
+        this._subscriptions.push(this._symLinkManager);
         this._subscriptions.push(this._portals);
         this._subscriptions.push(this._botPanel);
         this._subscriptions.push(this._idePortal);

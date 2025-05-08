@@ -16,6 +16,15 @@
                     >Show Error</md-button
                 >
             </div>
+            <div class="editor-sync">
+                <md-button
+                    @click="enableTagSync()"
+                    class="md-dense"
+                    :class="{ active: isCurrentTagSynced }"
+                    >Sync</md-button
+                >
+                <md-tooltip md-direction="top">Sync</md-tooltip>
+            </div>
             <div class="editor-docs">
                 <a
                     class="md-button md-dense"
