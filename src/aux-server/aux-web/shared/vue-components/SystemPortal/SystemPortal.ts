@@ -1063,7 +1063,7 @@ export default class SystemPortal extends Vue {
     }
 
     private _setSimUserBotTags(simulationId: string, tags: BotTags) {
-        let nullTags = mapValues(tags, (_o) => null);
+        let nullTags = mapValues(tags, (o): null => null);
         for (let [id, sim] of appManager.simulationManager.simulations) {
             if (id === simulationId) {
                 sim.helper.updateBot(sim.helper.userBot, {
@@ -1094,7 +1094,7 @@ export default class SystemPortal extends Vue {
             [SYSTEM_PORTAL_DIFF_TAG_SPACE]: tag.space ?? null,
         };
 
-        let nullTags = mapValues(tags, (_o) => null);
+        let nullTags = mapValues(tags, (o): null => null);
         for (let [id, sim] of appManager.simulationManager.simulations) {
             if (
                 id === this.diffOriginalBotSimId ||
